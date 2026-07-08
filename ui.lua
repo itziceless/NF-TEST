@@ -253,6 +253,7 @@ function UILib:CreateWindow(opts)
 		Size = UDim2.fromOffset(220, 34),
 		Position = UDim2.new(0, 0, 0, -46),
 		BackgroundColor3 = Theme.Sidebar,
+		Active = true,
 		Parent = root,
 	})
 	corner(pill, 8)
@@ -440,7 +441,7 @@ function UILib:CreateWindow(opts)
 	do
 		local dragging, dragStart, startPos
 		local dragHandle = isMobile() and content or pill
-		dragHandle.InputBegan = dragHandle.InputBegan
+		dragHandle.Active = true
 		local function beginDrag(input)
 			dragging = true
 			dragStart = input.Position
@@ -475,6 +476,7 @@ function UILib:CreateWindow(opts)
 			Size = UDim2.fromOffset(18, 18),
 			Position = UDim2.new(1, -18, 1, -18),
 			BackgroundTransparency = 1,
+			Active = true,
 			Parent = root,
 		})
 		new("TextLabel", {
@@ -841,6 +843,7 @@ function Tab:AddSlider(opts)
 		Size = UDim2.new(1, -28, 0, 6),
 		Position = UDim2.fromOffset(14, 34),
 		BackgroundColor3 = Theme.AccentMuted,
+		Active = true,
 		Parent = row,
 	})
 	corner(barBack, 3)
@@ -1121,7 +1124,7 @@ function Tab:AddColorPicker(opts)
 			BackgroundTransparency = 1, Size = UDim2.new(1, 0, 0, 12), TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 30, Parent = wrap,
 		})
-		local track = new("Frame", { Size = UDim2.new(1, 0, 0, 6), Position = UDim2.fromOffset(0, 16), BackgroundColor3 = Theme.AccentMuted, ZIndex = 30, Parent = wrap })
+		local track = new("Frame", { Size = UDim2.new(1, 0, 0, 6), Position = UDim2.fromOffset(0, 16), BackgroundColor3 = Theme.AccentMuted, Active = true, ZIndex = 30, Parent = wrap })
 		corner(track, 3)
 		local fill = new("Frame", { Size = UDim2.new(initial, 0, 1, 0), BackgroundColor3 = Color3.new(1,1,1), ZIndex = 30, Parent = track })
 		corner(fill, 3)
