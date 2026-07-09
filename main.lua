@@ -1,145 +1,103 @@
---[[
-	TestBuild.lua
-
-	Self-contained test harness. Run this as-is to see the entire library
-	working end to end — it builds a full demo UI by itself (every control
-	type, multiple tabs, config manager) with placeholder/test values only.
-
-	This is meant to be thrown away or heavily trimmed later — when you're
-	ready to build your real panel, start a NEW script that requires
-	UILibrary.lua directly (see the two-line pattern at the bottom of this
-	file) rather than editing this one.
-
-	Autosave: every toggle flip, slider drag, dropdown pick, or color change
-	below gets written to the "Autosave" config automatically (debounced
-	~0.25s so slider drags don't spam saves). Check Window.CurrentConfigName
-	/ Window.Store.Configs to confirm it's persisting as you interact.
-]]
-
-local UILib = require(script.Parent.UILibrary) -- adjust path if UILibrary.lua lives elsewhere
+local UILib = loadstring(game:HttpGet("https://raw.githubusercontent.com/itziceless/NF-TEST/refs/heads/main/ui.lua",  true))()
 
 local Window = UILib:CreateWindow({
-	Title = "TestBuild",
-	SubTitle = "self-generated demo",
+	Title = "Nightfall",
+	SubTitle = "showcase build",
 })
 
--- ── helper: dumps every control's current value, so you can watch
--- autosave actually mutate the stored JSON as you interact ──────────────
-local function dumpAutosave()
-	local cfg = Window.Store:Load(Window.CurrentConfigName)
-	print("---- Autosave (" .. Window.CurrentConfigName .. ") ----")
-	if cfg then
-		for k, v in pairs(cfg) do
-			print("  " .. tostring(k) .. " = " .. tostring(v))
-		end
-	else
-		print("  (nothing saved yet — change a control)")
-	end
-	print("--------------------------------------")
-end
+--=========================================================
+-- SECTION: Main (collapsible sidebar group)
+--=========================================================
+local Main = Window:AddSection("Main")
+
+local Overview = Main:AddTab({
+	Title = "Overview",
+	Icon = "🏠",
+	Description = "Everything in one place",
+	Tag = { Title = "New", Color = Color3.fromRGB(100, 200, 120) },
+})
+Overview:AddParagraph({
+	Title = "Welcome",
+	Desc = "This tab shows the Paragraph component with an icon and action buttons.",
+	Image = "★",
+	Buttons = {
+		{ Title = "Say Hi", Callback = function() print("Hi!") end },
+		{
+			Title = "Open Dialog",
+			Callback = function()
+				Window:Dialog({
+					Title = "Confirm Action",
+					Content = "This is the modal Dialog system — background dims and the window is non-interactable until you choose.",
+					Buttons = {
+						{ Title = "Yes", Primary = true, Callback = function() print("Confirmed") end },
+						{ Title = "No", Callback = function() print("Cancelled") end },
+					},
+				})
+			end,
+		},
+	},
+})
+Overview:AddButton({
+	Text = "Fire a Notification",
+	Callback = function()
+		Window:Notify({
+			Title = "Saved",
+			Desc = "Config saved successfully.",
+			Icon = "✓",
+			Duration = 4,
+		})
+	end,
+})
+Overview:AddProgressBar({
+	Title = "Storage",
+	Desc = "Used space (test data)",
+	Value = { Min = 0, Max = 100, Default = 42 },
+	DisplayMode = "Percent",
+})
+
+local Credits = Main:AddTab({ Title = "Credits", Icon = "✎", Description = "Who built this" })
+Credits:AddLabel("Nightfall UI Library — built on UILibrary.lua")
+Credits:AddLabel("All content on this tab is placeholder text.")
 
 --=========================================================
--- Tab 1: General — one of each basic control
+-- SECTION: Commands
 --=========================================================
-local General = Window:AddTab("General")
-General:AddSectionLabel("Toggles")
-General:AddToggle({ Text = "Test Toggle A", Default = true,  Callback = function(v) print("Toggle A ->", v) end })
-General:AddToggle({ Text = "Test Toggle B", Default = false, Callback = function(v) print("Toggle B ->", v) end })
+local Commands = Window:AddSection("Commands")
 
-General:AddSectionLabel("Sliders")
-General:AddSlider({ Text = "Test Slider (0-100)", Min = 0, Max = 100, Default = 42, Callback = function(v) print("Slider ->", v) end })
-General:AddSlider({ Text = "Test Range (0-1000m)", Min = 0, Max = 1000, Default = 250, Suffix = "m", Callback = function(v) print("Range ->", v) end })
-
-General:AddSectionLabel("Dropdown")
-General:AddDropdown({
-	Text = "Test Single-Select",
+local PlayerTab = Commands:AddTab({ Title = "Player", Icon = "🧍", Tag = { Title = "Beta", Color = Color3.fromRGB(90, 140, 230) } })
+PlayerTab:AddSectionLabel("Basics")
+PlayerTab:AddToggle({ Text = "Test Toggle", Default = true, Callback = function(v) print("Toggle ->", v) end })
+PlayerTab:AddSlider({ Text = "Test Slider (click # to edit)", Min = 0, Max = 200, Default = 60, Callback = function(v) print("Slider ->", v) end })
+PlayerTab:AddDropdown({
+	Text = "Single Select",
 	Options = { "Option A", "Option B", "Option C" },
 	Default = "Option A",
-	Callback = function(v) print("Single-select ->", v) end,
+	Callback = function(v) print("Dropdown ->", v) end,
 })
-General:AddDropdown({
-	Text = "Test Multi-Select",
-	Options = { "Alpha", "Beta", "Gamma", "Delta" },
+PlayerTab:AddDropdown({
+	Text = "Multi Select",
 	Multi = true,
+	Options = { "Alpha", "Beta", "Gamma", "Delta" },
 	Default = { "Alpha" },
-	Callback = function(v) print("Multi-select ->", table.concat(v, ", ")) end,
+	Callback = function(v) print("Multi ->", table.concat(v, ", ")) end,
 })
+PlayerTab:AddColorPicker({ Text = "Test Color", Default = Color3.fromRGB(255, 255, 255), Callback = function(c) print("Color ->", c) end })
+PlayerTab:AddTextBox({ Title = "Test Text Input", Placeholder = "type something...", Clearable = true, Callback = function(v) print("Text ->", v) end })
+PlayerTab:AddButton({ Text = "Scroll to first element", Callback = function() PlayerTab:ScrollToElement(1) end })
 
-General:AddSectionLabel("Color")
-General:AddColorPicker({ Text = "Test Color", Default = Color3.fromRGB(255, 255, 255), Callback = function(c) print("Color ->", c) end })
-
-General:AddButton({ Text = "Print Autosave Contents", Callback = dumpAutosave })
-
---=========================================================
--- Tab 2: Filter-style list (mirrors the searchable-table layout,
--- generic placeholder rows instead of anything game-specific)
---=========================================================
-local ListTab = Window:AddTab("Filter Demo")
-ListTab:AddSectionLabel("Selectable Rows (test data)")
-for i = 1, 8 do
-	ListTab:AddToggle({
-		Text = "Test Item " .. i,
-		Default = (i == 1),
-		Callback = function(v) print("Test Item " .. i, "->", v) end,
-	})
+local GameTab = Commands:AddTab({ Title = "Game", Icon = "🎮", Description = "Server-level test controls" })
+for i = 1, 6 do
+	GameTab:AddToggle({ Text = "Test Setting " .. i, Default = (i % 2 == 0), Callback = function(v) print("Setting " .. i, "->", v) end })
 end
 
 --=========================================================
--- Tab 3: Settings — config manager (Configs / Trash pattern)
+-- SECTION: Misc
 --=========================================================
-local Settings = Window:AddTab("Settings")
-Settings:AddSectionLabel("Configs")
+local Misc = Window:AddSection("Misc")
 
-Settings:AddButton({
-	Text = "+ Create 'Demo Config'",
-	Callback = function()
-		Window:SaveConfig("Demo Config")
-		print("Created + switched active config to 'Demo Config'")
-	end,
-})
-Settings:AddButton({
-	Text = "Switch back to Autosave config",
-	Callback = function()
-		Window:LoadConfig("Autosave")
-		print("Switched active config to 'Autosave'")
-	end,
-})
-Settings:AddButton({
-	Text = "List All Configs",
-	Callback = function()
-		for _, entry in ipairs(Window:ListConfigs()) do
-			print(entry.name, "| created", entry.created, "| updated", entry.updated)
-		end
-	end,
-})
-Settings:AddButton({
-	Text = "Delete 'Demo Config' (-> Trash)",
-	Callback = function()
-		Window:DeleteConfig("Demo Config")
-		print("Moved 'Demo Config' to Trash")
-	end,
-})
-Settings:AddButton({
-	Text = "Restore 'Demo Config' from Trash",
-	Callback = function()
-		Window:RestoreConfig("Demo Config")
-		print("Restored 'Demo Config'")
-	end,
-})
+-- Ready-made settings panel: theme, accent color, corner roundness, anim
+-- speed, UI scale, transparency, padding, compact mode, font, icon size —
+-- all wired to the live Theme already.
+Window:AddSettingsTab(Misc)
 
-print("TestBuild loaded — flip a toggle or drag a slider, then hit 'Print Autosave Contents' to confirm it saved.")
-
---=========================================================
--- WHEN YOU BUILD THE REAL VERSION LATER:
--- In a brand new script, just do:
---
---   local UILib = require(path.to.UILibrary)
---   local Window = UILib:CreateWindow({ Title = "...", SubTitle = "..." })
---   local Tab = Window:AddTab("...")
---   Tab:AddToggle({ ... })
---   -- etc.
---
--- Everything (autosave, resizing, mobile support, config store) comes
--- for free from UILibrary.lua — this file was only scaffolding to prove
--- it all works.
---=========================================================
+print("Showcase loaded — check the Main/Commands/Misc sections in the sidebar.")
