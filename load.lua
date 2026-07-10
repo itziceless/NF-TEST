@@ -1,4 +1,4 @@
-loadstring(game:HttpGet("https://raw.githubusercontent.com/itziceless/NF-TEST/refs/heads/main/ui.lua",  true))()
+
 
 
 --[[
